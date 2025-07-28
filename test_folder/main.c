@@ -21,12 +21,22 @@ int draw_pixel(char *data, int x, int y, int color, int size_line, int bpp)
 
 void draw_line(char *data, int x0, int y0, int x1, int y1, int color, int size_line, int bpp)
 {
-	int dx = abs(x1 - x0);
-	int dy = abs(y1 - y0);
-	int sx = (x0 < x1) ? 1 : -1;
-	int sy = (y0 < y1) ? 1 : -1;
-	int err = dx - dy;
+	int dx = x1 - x0;
+	int dy = y1 - y0;
+	int step_x = 1;
+	int step_y = 1;
 
+	if (dx < 0)
+	{
+		step_x = -1;
+		dx = -dx;
+	}
+	if (dy < 0)
+	{
+		step_y = -1;
+		dy = -dy;
+	}
+	int err = dx - dy;
 	while (1)
 	{
 		draw_pixel(data, x0, y0, color, size_line, bpp);
@@ -35,13 +45,13 @@ void draw_line(char *data, int x0, int y0, int x1, int y1, int color, int size_l
 		int e2 = 2 * err;
 		if (e2 > -dy)
 		{
-			err -= dy;
-			x0 += sx;
+			err = err - dy;
+			x0 = x0 + step_x;
 		}
 		if (e2 < dx)
 		{
-			err += dx;
-			y0 += sy;
+			err = err + dx;
+			y0 = y0 + step_y;
 		}
 	}
 }
