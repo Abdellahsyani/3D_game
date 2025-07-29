@@ -1,6 +1,7 @@
 #include <mlx.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 typedef struct	s_data {
 	void	*img;
@@ -19,48 +20,35 @@ int draw_pixel(char *data, int x, int y, int color, int size_line, int bpp)
     return 0;
 }
 
+// DDA algo
 void draw_line(char *data, int x0, int y0, int x1, int y1, int color, int size_line, int bpp)
 {
-	int dx = x1 - x0;
-	int dy = y1 - y0;
-	int step_x = 1;
-	int step_y = 1;
+	float dx = x1 - x0;
+	float dy = y1 - y0;
+	float steps = 0;
+	float step_x = 0;
+	float step_y = 0;
 
-	if (dx < 0)
+	if (fabs(dx) > fabs(dy))
+		steps = dx;
+	else
+		steps = dy;
+	step_x = dx / steps;
+	step_y = dy / steps;
+	float x = x0;
+	float y = y0;
+
+	for (int i = 0; i <= steps; i++)
 	{
-		step_x = -1;
-		dx = -dx;
-	}
-	if (dy < 0)
-	{
-		step_y = -1;
-		dy = -dy;
-	}
-	int err = dx - dy;
-	while (1)
-	{
-		draw_pixel(data, x0, y0, color, size_line, bpp);
-		if (x0 == x1 && y0 == y1)
-			break;
-		int e2 = 2 * err;
-		if (e2 > -dy)
-		{
-			err = err - dy;
-			x0 = x0 + step_x;
-		}
-		if (e2 < dx)
-		{
-			err = err + dx;
-			y0 = y0 + step_y;
-		}
+		draw_pixel(data, (int)x, (int)y, color, size_line, bpp);
+		x += step_x;
+		y += step_y;
 	}
 }
 
 void draw_rectangle(char *data, int start_x, int start_y, int width, int height, int color, int size_line, int bpp)
 {
-	draw_line(data, 10, 10, 100, 10, color, size_line, bpp);
-	draw_line(data, 10, 10, 100, 60, color, size_line, bpp);
-	draw_line(data, 100, 10, 100, 60, color, size_line, bpp);
+	draw_line(data, 50, 100, 550, 600, color, size_line, bpp);
 }
 
 int main()
