@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <unistd.h>
 
 typedef struct	s_data {
 	void	*img;
@@ -41,14 +42,27 @@ void draw_line(char *data, int x0, int y0, int x1, int y1, int color, int size_l
 	for (int i = 0; i <= steps; i++)
 	{
 		draw_pixel(data, (int)x, (int)y, color, size_line, bpp);
-		x += step_x;
-		y += step_y;
+		x += fabs(step_x);
+		y += fabs(step_y);
 	}
 }
 
 void draw_rectangle(char *data, int start_x, int start_y, int width, int height, int color, int size_line, int bpp)
 {
-	draw_line(data, 50, 100, 550, 600, color, size_line, bpp);
+	int i = 0;
+	int x1 = 90, y1 = 200;
+	int dis = 110;
+	int theta = -30;
+	draw_line(data, 90, 90, x1, y1, color, size_line, bpp);
+	while (theta <= 160)
+	{
+		float n_x = sin(theta) * dis + 90;
+		float n_y = cos(theta) * dis + 90;
+		printf("%f, %f\n", n_y, n_x);
+		printf("theta=> %d, sin(%f): cos(%f)\n", theta, sin(theta), cos(theta));
+		draw_line(data, 90, 90, (int)n_x, (int)n_y, color, size_line, bpp);
+		theta += theta;
+	}
 }
 
 int main()
