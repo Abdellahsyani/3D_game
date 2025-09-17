@@ -52,7 +52,7 @@ void draw_rectangle(char *data, int start_x, int start_y, int width, int height,
 	int i = -90;
 	int x1 = 90, y1 = 200;
 	int dis = 110;
-	int theta = 0;
+	int theta = 60;
 	while (theta <= 380)
 	{
 		float theta_rad = theta * M_PI / 180.0;
