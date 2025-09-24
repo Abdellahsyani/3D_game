@@ -28,96 +28,112 @@ int key_release(int keycode, t_game *game)
 	return (0);
 }
 
-void	Draw_textures(t_game *game, t_player *player, int column)
+void	side_W_E(t_player *player, t_game *game, int column)
 {
+	if (player->raydiX > 0)
+	{ 
+		// West wall
+		player->texWidth = game->west_width;
+		player->texHeight = game->west_height;
+		player->texAddr = (unsigned char *)game->west_addr;
+		player->bpp = game->west_bpp / 8;
+		player->lineLen = game->west_line_len;
+	}
+	else
+{ 
+		// East wall
+		player->texWidth = game->east_width;
+		player->texHeight = game->east_height;
+		player->texAddr = (unsigned char *)game->east_addr;
+		player->bpp = game->east_bpp / 8;
+		player->lineLen = game->east_line_len;
+	}
+	player->texX = (int)(player->wallX * player->texWidth);
+	if ((player->side == 0 && player->raydiX > 0) ||
+		(player->side == 1 && player->raydiY < 0))
+		player->texX = player->texWidth - player->texX - 1;
+}
 
-	// Draw wall
+void	side_N_S(t_player *player, t_game *game, int column)
+{
+	if (player->raydiY > 0)
+	{
+		// North wall
+		player->texWidth = game->north_width;
+		player->texHeight = game->north_height;
+		player->texAddr = (unsigned char *)game->north_addr;
+		player->bpp = game->north_bpp / 8;
+		player->lineLen = game->north_line_len;
+	}
+	else
+{
+		// South wall
+		player->texWidth = game->south_width;
+		player->texHeight = game->south_height;
+		player->texAddr = (unsigned char *)game->south_addr;
+		player->bpp = game->south_bpp / 8;
+		player->lineLen = game->south_line_len;
+	}
+	player->texX = (int)(player->wallX * player->texWidth);
+	if ((player->side == 0 && player->raydiX > 0) ||
+		(player->side == 1 && player->raydiY < 0))
+		player->texX = player->texWidth - player->texX - 1;
+}
+
+void	door_side(t_player *player, t_game *game, int column)
+{
+        int door_idx = find_door_idx(game, (int)player->mapX, (int)player->mapY);
+        if (door_idx < 0) // safety: no such door
+            return;
+        player->texWidth      = game->door_width;
+        player->texHeight     = game->door_height;
+        player->texAddr       = (unsigned char *)game->door_addr;
+        player->bpp = game->door_bpp / 8;
+        player->lineLen       = game->door_line_len;
+
+        /* base column inside door texture */
+        player->texX = (int)(player->wallX * (float)player->texWidth);
+
+        /* shift horizontally by door progress (0.0..1.0) to simulate sliding */
+        player->texX += (int)(game->arr_door[door_idx].progress * (float)player->texWidth);
+}
+
+void draw_wall(t_game *game, t_player *player, int column)
+{
+	int y;
+
 	char cell = player->map[(int)player->mapX][(int)player->mapY];
-	if (player->side == 0)
+	y = player->start_draw;
+	if (cell == 'D')
+		door_side(player, game, column);
+	else if (player->side == 0)
+		side_W_E(player, game, column);
+	else
+		side_N_S(player, game, column);
+	player->step = (float)player->texHeight / player->line_height;
+	player->texPos = (player->start_draw - WIN_HEIGHT / 2.0f + player->line_height / 2.0f) * player->step;
+	while (y < player->end_draw)
 	{
-		if (cell == 'D')
-		{
-			int door_idx = find_door_idx(game, player->mapX, player->mapY);
-			int texX = (int)(player->wallX * game->door_width);
-			texX = texX + (int)(game->arr_door[door_idx].progress * game->door_width);
-			if (texX >= game->door_width)
-				return;
-			for (int y = player->start_draw; y < player->end_draw; y++)
-			{
-				int texY = (int)(((y - player->start_draw) * game->door_height) / player->line_height);
-				unsigned int color = *(unsigned int *)(game->door_addr + texY * game->door_line_len + texX * (game->door_bpp / 8));
-				put_pixel(&game->img, column, y, color);
-			}
-			return;
-		}
-		if (player->raydiX > 0)
-		{
-			int texX = (int)(player->wallX * game->west_width);
-			if ((player->side == 0 && player->raydiX > 0) || (player->side == 1 && player->raydiY < 0))
-				texX = game->west_width - 1 - texX;
+		player->texY = (int)player->texPos;
+		if (player->texY >= player->texHeight) player->texY = player->texHeight - 1;
+		player->texPos += player->step;
 
-			for (int y = player->start_draw; y < player->end_draw; y++)
-			{
-				int texY = (int)(((y - player->start_draw) * game->west_height) / player->line_height);
-				unsigned int color = *(unsigned int *)(game->west_addr + texY * game->west_line_len + texX * (game->west_bpp / 8));
-				put_pixel(&game->img, column, y, color);
-			}
-		}
-		else
-	{
-			int texX = (int)(player->wallX * game->east_width);
-			for (int y = player->start_draw; y < player->end_draw; y++)
-			{
-				int texY = (int)(((y - player->start_draw) * game->east_height) / player->line_height);
-				unsigned int color = *(unsigned int *)(game->east_addr + texY * game->east_line_len + texX * (game->east_bpp / 8));
-				put_pixel(&game->img, column, y, color);
-			}
-		}
+		unsigned int color = *(unsigned int *)(player->texAddr + player->texY * player->lineLen + player->texX * player->bpp);
+		put_pixel(&game->img, column, y, color);
+		y++;
 	}
-	if (player->side == 1)
-	{
-		if (cell == 'D')
-		{
-			int door_idx = find_door_idx(game, player->mapX, player->mapY); // <--- USE THIS!
-			int texX = (int)(player->wallX * game->door_width);
-			texX = texX + (int)(game->arr_door[door_idx].progress * game->door_width);
-			if (texX >= game->door_width)
-				return;
-			for (int y = player->start_draw; y < player->end_draw; y++)
-			{
-				int texY = (int)(((y - player->start_draw) * game->door_height) / player->line_height);
-				unsigned int color = *(unsigned int *)(game->door_addr + texY * game->door_line_len + texX * (game->door_bpp / 8));
-				put_pixel(&game->img, column, y, color);
-			}
-			return;
-		}
-		if (player->raydiY > 0)
-		{
-			int texX = (int)(player->wallX * game->north_width);
-			for (int y = player->start_draw; y < player->end_draw; y++)
-			{
-				int texY = (int)(((y - player->start_draw) * game->north_height) / player->line_height);
-				unsigned int color = *(unsigned int *)(game->north_addr + texY * game->north_line_len + texX * (game->north_bpp / 8));
-				put_pixel(&game->img, column, y, color);
-			}
-		}
-		else
-	{
-			int texX = (int)(player->wallX * game->south_width);
-			if ((player->side == 0 && player->raydiX > 0) || (player->side == 1 && player->raydiY < 0))
-				texX = game->south_width - 1 - texX;
-			for (int y = player->start_draw; y < player->end_draw; y++)
-			{
-				int texY = (int)(((y - player->start_draw) * game->south_height) / player->line_height);
-				unsigned int color = *(unsigned int *)(game->south_addr + texY * game->south_line_len + texX * (game->south_bpp / 8));
-				put_pixel(&game->img, column, y, color);
-			}
-		}
-	}
+}
+
+int	to_hex(int r, int g, int b)
+{
+	return ((r << 16) | (g << 8) | b);
 }
 
 void	draw_wall_column(t_game *game, t_player *player, int column)
 {
+	// get colors
+	/*int roof_color = to_hex(player->roof[0], player->roof[1], player->roof[2]);*/
+	/*int floor_color = to_hex(player->floor[0], player->floor[1], player->floor[2]);*/
 	// Calculate line height and draw positions
 	if (player->side == 0)
 		player->wallp = player->dsidX - player->dx;
@@ -139,12 +155,14 @@ void	draw_wall_column(t_game *game, t_player *player, int column)
 		player->wallX = player->playerY + player->wallp * player->raydiY;
 		if (player->map[player->mapX][player->mapY] == 'D')
 			player->wallX = player->y_door + player->wallp * player->raydiY;
+
 	}
 	else
 {
 		player->wallX = player->playerX + player->wallp * player->raydiX;
 		if (player->map[player->mapX][player->mapY] == 'D')
 			player->wallX = player->x_door + player->wallp * player->raydiX;
+
 	}
 	player->wallX -= floor(player->wallX);
 
@@ -152,7 +170,8 @@ void	draw_wall_column(t_game *game, t_player *player, int column)
 	for (int y = 0; y < player->start_draw; y++)
 		put_pixel(&game->img, column, y, 0x8BE9FF);
 
-	Draw_textures(game, player, column);
+	draw_wall(game, player, column);
+	/*Draw_textures(game, player, column);*/
 
 	// Draw floor (below wall)
 	for (int y = player->end_draw; y < WIN_HEIGHT; y++)

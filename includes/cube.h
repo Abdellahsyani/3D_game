@@ -79,11 +79,21 @@ typedef struct s_player
 	float wallX;
 	float dirX;
 	float dirY;
-	int	texX;
 	void	*img_wall;
 	int x_door;
 	int y_door;
 	int idx;
+	// variable for draw W S
+	float step;
+	float texPos;
+	int texHeight;
+	int texWidth;
+	unsigned char *texAddr;
+	int bpp;
+	int lineLen;
+	int texX;
+	int texY;
+
 }	t_player;
 
 typedef struct s_game
