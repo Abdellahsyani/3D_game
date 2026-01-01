@@ -1,0 +1,21 @@
+NO textures/red_wall.xpm
+SO textures/wall_1.xpm
+WE textures/wall_2.xpm
+EA textures/wall.xpm
+
+F 20,20,20
+C 200,200,200
+
+11111
+10001
+10S01
+10001
+10001
+10001
+11001
+10001
+10001
+10001
+10001
+10001
+11111

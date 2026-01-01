@@ -1,0 +1,42 @@
+
+
+
+
+
+
+
+
+NO textures/red_wall.xpm
+
+
+
+
+
+
+
+
+SO textures/wall_1.xpm
+                        WE textures/red_wall.xpm
+        EA textures/red_wall.xpm            
+
+        F 20,           20,             20
+C 200,          200,200
+
+11111
+10001
+10S01                
+10001
+10001
+10001
+11001               
+11111
+11111
+10001
+10001
+11101
+11111
+     
+
+       
+       
+            
